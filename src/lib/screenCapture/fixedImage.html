@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        @import "./assets/font/css/all.css";
+
+        html, body, div {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body::-webkit-scrollbar {
+            display: none;
+        }
+
+        .bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="js-bg" class="bg"></div>
+</body>
+<script>
+  function closeWindowMove(){
+    window.api.windowMove(false)
+  }
+  document.getElementById('js-bg').addEventListener('mousedown',()=>{
+    window.api.windowMove(true)
+  })
+  document.getElementById('js-bg').addEventListener('mouseout',()=>{
+    window.api.windowMove(false)
+  })
+  document.getElementById('js-bg').addEventListener('mouseup',()=>{
+    window.api.windowMove(false)
+  })
+  document.getElementById('js-bg').style.backgroundImage = `url(${window.api.getLastScreenShot()})`
+
+</script>
+</html>
+

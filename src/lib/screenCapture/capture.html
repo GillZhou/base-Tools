@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        @import "./assets/font/css/all.css";
+
+        html, body, div {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body::-webkit-scrollbar{
+            display: none;
+        }
+
+        .select-area{
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: rgba(0,0,0,0);
+            box-shadow: rgba(0, 0, 0, 0.5) 0 0 0 20000px;
+            display: none;
+        }
+
+        .bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .image-canvas {
+            position: absolute;
+            display: none;
+            z-index: 1000;
+            border: aqua 3px solid;
+            box-sizing: border-box;
+            /*background:rgba(255,255,255,1);*/
+        }
+
+        .size-info {
+            position: absolute;
+            color: #ffffff;
+            font-size: 14px;
+            background: rgba(40, 40, 40, 0.8);
+            padding: 5px 10px;
+            border-radius: 2px;
+            font-family: Arial Consolas sans-serif;
+            display: none;
+            z-index: 2;
+            left: 0;
+            white-space: nowrap;
+        }
+
+        .toolbar {
+            position: absolute;
+            color: #343434;
+            font-size: 12px;
+            background: #f5f5f5;
+            border-radius: 4px;
+            font-family: Arial Consolas sans-serif;
+            display: none;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+            z-index: 2;
+            align-items: center;
+            right: 0;
+            cursor:default;
+        }
+
+        .toolbar .iconfont {
+            font-size: 16px;
+            padding: 2px 2px;
+        }
+
+        .toolbar-icon{
+            width: 26px;
+            height: 26px;
+            text-align: center;
+            line-height: 26px;
+        }
+
+        .toolbar-icon:hover{
+            border: #000000 1px solid;
+            box-sizing: border-box;
+        }
+
+        .enlarge-area{
+            width: 180px;
+            height: 220px;
+            position: fixed;
+            z-index: 3000;
+            background: #000000;
+            color: #ffffff;
+            display: none;
+            text-align: center;
+        }
+
+        .enlarge-image{
+            height: 120px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .enlarge-image-value{
+            position: relative;
+        }
+
+        .enlarge-row-line{
+            position: absolute;
+            left: 0;
+            top: 50%;
+            border: aqua 1px solid;
+            width: 100%;
+            height: 1px;
+        }
+
+        .enlarge-col-line{
+            position: absolute;
+            left: 50%;
+            top: 0;
+            border: aqua 1px solid;
+            height: 100%;
+            width: 1px;
+        }
+
+        .enlarge-color-temp{
+            width: 14px;
+            height: 14px;
+            margin-right: 10px;
+            display: inline-block;
+        }
+    </style>
+</head>
+
+<body>
+<div id="js-bg" class="bg"></div>
+<div id="js-select-area" class="select-area">
+    <div style="width: 200px"><div id="js-size-info" class="size-info"></div></div>
+    <div id="js-toolbar" class="toolbar">
+        <div class="iconfont" id="js-tool-reset" title="重置此截图"><i class="fas fa-undo toolbar-icon"></i></div>
+        <div class="iconfont" id="js-tool-save" title="下载此截图"><i class="fas fa-download toolbar-icon"></i></div>
+        <div class="iconfont" id="js-tool-fixed" title="固定在桌面上"><i class="fas fa-thumbtack toolbar-icon"></i></div>
+        <div class="iconfont" id="js-tool-close" title="关闭截图"><i class="fas fa-times toolbar-icon"></i></div>
+        <div class="iconfont" id="js-tool-ok" title="复制该截图到粘贴板"><i class="fas fa-check toolbar-icon"></i></div>
+    </div>
+</div>
+<div class="enlarge-area" id="enlarge-area">
+    <div class="enlarge-image">
+        <img id="enlarge-image-value" class="enlarge-image-value" alt="当前位置" onerror="">
+        <div class="enlarge-row-line"></div>
+        <div class="enlarge-col-line"></div>
+    </div>
+    <div class="enlarge-text">
+        <div class="enlarge-position">
+            <span id="enlarge-pageX">100</span>,<span id="enlarge-pageY">100</span>
+        </div>
+        <div class="enlarge-color">
+            <span id="enlarge-color-temp" class="enlarge-color-temp"></span><span id="enlarge-color-value">#FFFFFF</span>
+        </div>
+        <div>
+            按C复制颜色值
+        </div>
+        <div>
+            按SHIFT切换 RGB/HEX
+        </div>
+    </div>
+</div>
+<canvas id="js-canvas" class="image-canvas"></canvas>
+
+<div id="js-point-pixel" class="point-pixel"></div>
+<div id="js-fixed-image" class="fixed-image"></div>
+
+<script src="capture-renderer.js"></script>
+</body>
+</html>
+
