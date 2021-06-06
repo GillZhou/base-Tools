@@ -33,7 +33,7 @@ ipcRenderer.on('startCapture-reply', (event, currentScreen) => {
   desktopCapturer.getSources(options).then((sources) => {
     sources.forEach(source => {
       if (source.name === 'Entire Screen') {
-        imgSrc = source.thumbnail.toDataURL()
+        const imgSrc = source.thumbnail.toDataURL()
         $selectArea.style.display = 'block'
         const capture = new CaptureEditor($canvas, $bg, imgSrc, $selectArea, $fixedImage, currentScreen)
         const onDrag = (selectRect) => {
@@ -71,15 +71,6 @@ ipcRenderer.on('startCapture-reply', (event, currentScreen) => {
         }
         capture.on('end-dragging', onDragEnd)
 
-        ipcRenderer.on('capture-screen', (e, {
-          type,
-          screenId
-        }) => {
-          if (type === 'select') {
-            capture.disable()
-          }
-        })
-
         document.addEventListener('keydown', (e) => {
           switch (e.keyCode) {
           case 37:
@@ -105,6 +96,7 @@ ipcRenderer.on('startCapture-reply', (event, currentScreen) => {
           case 16:
             if (!capture.showEnlarge) return
             capture.colorHEX = !capture.colorHEX
+            capture.toggleColor();
             break
           case 67:
             if (!capture.showEnlarge) return

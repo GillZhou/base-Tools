@@ -8,12 +8,12 @@ const {
 const os = require('os')
 const path = require('path')
 const fs = require('fs')
-const Store = require('electron-store')
-const store = new Store()
 
 let captureInstance = false
 
 const fixedWindows = []
+
+let freeWindow = null
 
 const captureScreen = (e, args) => {
   captureInstance = new BrowserWindow({
@@ -33,66 +33,110 @@ const captureScreen = (e, args) => {
     }
   })
 
-  captureInstance.on('close', (e) => {
+  captureInstance.on('closed', (e) => {
     captureInstance = false
+    globalShortcut.unregister('Esc')
   })
 
-  // captureInstance.setAlwaysOnTop(true, 'screen-saver');
+  captureInstance.setAlwaysOnTop(true, 'screen-saver', 2);
   captureInstance.setVisibleOnAllWorkspaces(true)
   captureInstance.setFullScreenable(false)
   captureInstance.loadFile('../src/lib/screenCapture/capture.html').then(() => {
-    console.log('start-capture')
+    console.log('start-capture');
+    if (!freeWindow) {
+      freeWindow = new BrowserWindow({
+        width: 1000,
+        height: 1000,
+        frame: false,
+        transparent: true,
+        hasShadow: false,
+        webPreferences: {
+          preload: path.join(__dirname, '../src/lib/screenCapture/fixedPreload.js')
+        }
+      })
+    }
   })
 
   globalShortcut.register('Esc', () => {
     console.log('close')
     captureInstance.close()
   })
+  return captureInstance
+}
 
-  ipcMain.on('savePicture-message', (event, data) => {
-    dialog.showSaveDialog({
-      filters: [{
-        name: 'Images',
-        extensions: ['png', 'jpg', 'gif']
-      }]
-    }).then((res) => {
-      if (!res.canceled) {
-        fs.writeFile(res.filePath, Buffer.from(data.url.replace('data:image/png;base64,', '')), (err) => {
-          if (err) return console.log(err)
-        })
-      }
-      captureInstance.close()
-    })
+ipcMain.on('savePicture-message', (event, data) => {
+  dialog.showSaveDialog({
+    filters: [{
+      name: 'Images',
+      extensions: ['png', 'jpg', 'gif']
+    }]
+  }).then((res) => {
+    if (!res.canceled) {
+      fs.writeFile(res.filePath, Buffer.from(data.url.replace('data:image/png;base64,', '')), (err) => {
+        if (err) return console.log(err)
+      })
+    }
+    captureInstance.close()
   })
+})
 
-  ipcMain.on('showFixedImage-capture', (event, screenShotInfo) => {
-    const fixedImageInstance = new BrowserWindow({
-      width: screenShotInfo.w,
-      height: screenShotInfo.h,
-      x: screenShotInfo.x,
-      y: screenShotInfo.y,
-      // transparent: true,
-      frame: false,
-      resizable: false,
-      webPreferences: {
-        preload: path.join(__dirname, '../src/lib/screenCapture/fixedPreload.js')
-      }
-    })
-    const lastScreenShot = store.has('lastScreenShot') ? store.get('lastScreenShot') : []
-    lastScreenShot.push(screenShotInfo)
-    store.set('lastScreenShot', lastScreenShot)
-    // fixedImageInstance.setAlwaysOnTop(true, 'screen-saver')
+ipcMain.on('showFixedImage-capture', (event, screenShotInfo) => {
+  console.time('fixed-start')
+  const fixedImageInstance = freeWindow;
+  freeWindow = null;
+  fixedImageInstance.loadFile('../src/lib/screenCapture/fixedImage.html').then(() => {
+    console.log('load end')
+    fixedImageInstance.setSize(screenShotInfo.w, screenShotInfo.h)
+    fixedImageInstance.setPosition(screenShotInfo.x, screenShotInfo.y)
+    fixedImageInstance.setAlwaysOnTop(true, 'screen-saver', 1)
     fixedImageInstance.setVisibleOnAllWorkspaces(true)
     fixedImageInstance.setFullScreenable(false)
     fixedImageInstance.setMovable(true)
-    fixedImageInstance.loadFile('../src/lib/screenCapture/fixedImage.html').then((r) => {
-      captureInstance.close()
-      windowMove(fixedImageInstance)
-      fixedWindows.push(fixedImageInstance)
+    fixedImageInstance.webContents.send('fixedImage-message', screenShotInfo)
+    fixedWindows.push(fixedImageInstance)
+    captureInstance.close()
+    fixedImageInstance.show()
+    console.timeEnd('fixed-start')
+    fixedImageInstance.on('closed', (event) => {
+      const index = fixedWindows.indexOf(event);
+      fixedWindows.splice(index, 1)
     })
   })
-  return captureInstance
-}
+})
+
+ipcMain.on('window-move-open', (events, canMoving) => {
+  let win = null;
+  fixedWindows.forEach(item => {
+    if (item.isFocused()) {
+      win = item;
+    }
+  });
+  if (canMoving) {
+    // 读取原位置
+    const winPosition = win.getPosition()
+    win.winStartPosition = {
+      x: winPosition[0],
+      y: winPosition[1]
+    }
+    win.mouseStartPosition = screen.getCursorScreenPoint()
+    // 清除
+    if (win.movingInterval) {
+      clearInterval(win.movingInterval)
+    }
+    // 新开
+    win.movingInterval = setInterval(() => {
+      // 实时更新位置
+      const cursorPosition = screen.getCursorScreenPoint()
+      const x = win.winStartPosition.x + cursorPosition.x - win.mouseStartPosition.x
+      const y = win.winStartPosition.y + cursorPosition.y - win.mouseStartPosition.y
+      win.setPosition(x, y, true)
+      // win.mouseStartPosition = cursorPosition;
+    }, 1)
+  } else {
+    clearInterval(win.movingInterval)
+    win.movingInterval = null
+  }
+})
 
 const useCapture = () => {
   globalShortcut.register('CmdOrCtrl+Shift+O', function () {
@@ -118,50 +162,6 @@ const useCapture = () => {
     event.reply('startCapture-reply', replyData)
   })
 }
-
-function windowMove (win) {
-  let winStartPosition = {
-    x: 0,
-    y: 0
-  }
-  let mouseStartPosition = {
-    x: 0,
-    y: 0
-  }
-  let movingInterval = null
-
-  /**
-   * 窗口移动事件
-   */
-  ipcMain.on('window-move-open', (events, canMoving) => {
-    if (canMoving) {
-      // 读取原位置
-      const winPosition = win.getPosition()
-      winStartPosition = {
-        x: winPosition[0],
-        y: winPosition[1]
-      }
-      mouseStartPosition = screen.getCursorScreenPoint()
-      // 清除
-      if (movingInterval) {
-        clearInterval(movingInterval)
-      }
-      // 新开
-      movingInterval = setInterval(() => {
-        // 实时更新位置
-        const cursorPosition = screen.getCursorScreenPoint()
-        const x = winStartPosition.x + cursorPosition.x - mouseStartPosition.x
-        const y = winStartPosition.y + cursorPosition.y - mouseStartPosition.y
-        win.setPosition(x, y, true)
-      }, 20)
-    } else {
-      clearInterval(movingInterval)
-      movingInterval = null
-    }
-  })
-}
-
-exports.windowMove = windowMove
 
 exports.useCapture = useCapture
 exports.captureSceen = captureScreen

@@ -70,6 +70,7 @@ class CaptureEditor extends Event {
     this.enlargeColorTemp = document.getElementById('enlarge-color-temp')
     this.colorHEX = false
     this.$bg = $bg
+    this.$bg.style.backgroundImage = `url(${imageSrc})`
     this.ctx = $canvas.getContext('2d')
 
     this.onMouseDown = this.onMouseDown.bind(this)
@@ -102,16 +103,20 @@ class CaptureEditor extends Event {
         this.enlargeImage.style.left = `-${pageX * ENLARGE_RATE - 90}px`
         this.enlargeImage.style.top = `-${pageY * ENLARGE_RATE - 60}px`
         const color = this.bgCtx.getImageData(pageX, pageY, 1, 1).data
-        if (this.colorHEX) {
-          this.pixelColor = this.colorRGB2Hex(color[0], color[1], color[2]);
-          this.enlargeColor.innerHTML = this.pixelColor
-        } else {
-          this.pixelColor = `(${color[0]},${color[1]},${color[2]})`
-          this.enlargeColor.innerHTML = this.pixelColor
-        }
+        this.pixelColor = color;
+        this.toggleColor();
         this.enlargeColorTemp.style.background = `rgb(${color[0]},${color[1]},${color[2]})`
       })
     })
+  }
+
+  toggleColor () {
+    const color = this.pixelColor;
+    if (this.colorHEX) {
+      this.enlargeColor.innerHTML = this.colorRGB2Hex(color[0], color[1], color[2])
+    } else {
+      this.enlargeColor.innerHTML = `(${color[0]},${color[1]},${color[2]})`
+    }
   }
 
   // 将rgb颜色转成hex  输入(24,12,255)
