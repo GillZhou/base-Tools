@@ -50,6 +50,7 @@ const captureScreen = (e, args) => {
         frame: false,
         transparent: true,
         hasShadow: false,
+        show: false,
         webPreferences: {
           preload: path.join(__dirname, '../src/lib/screenCapture/fixedPreload.js')
         }

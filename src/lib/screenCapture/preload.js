@@ -61,9 +61,9 @@ ipcRenderer.on('startCapture-reply', (event, currentScreen) => {
             } = capture.selectRect
             $toolbar.style.display = 'flex'
             if ((window.screen.height - y - h) < 30) {
-              $toolbar.style.bottom = '0'
+              $toolbar.style.bottom = '1px'
             } else {
-              $toolbar.style.bottom = '-30px'
+              $toolbar.style.bottom = '-35px'
             }
             // $toolbar.style.top = `${b + 15}px`
             // $toolbar.style.right = `${window.screen.width - r}px`

@@ -92,6 +92,7 @@ class CaptureEditor extends Event {
         this.enlargeArea.style.display = 'none'
       }, false)
       this.$canvas.addEventListener('mousemove', (e) => {
+        e.preventDefault()
         const {
           pageX,
           pageY
@@ -106,6 +107,14 @@ class CaptureEditor extends Event {
         this.pixelColor = color;
         this.toggleColor();
         this.enlargeColorTemp.style.background = `rgb(${color[0]},${color[1]},${color[2]})`
+      })
+      this.enlargeArea.addEventListener('mouseout', (e) => {
+        e.stopPropagation();
+        this.enlargeArea.style.display = 'none'
+      })
+      this.enlargeArea.addEventListener('mouseover', (e) => {
+        e.stopPropagation();
+        this.enlargeArea.style.display = 'none'
       })
     })
   }
