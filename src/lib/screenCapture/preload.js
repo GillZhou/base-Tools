@@ -27,6 +27,7 @@ ipcRenderer.on('startCapture-reply', (event, currentScreen) => {
   const $btnOk = document.getElementById('js-tool-ok')
   const $btnSave = document.getElementById('js-tool-save')
   const $btnReset = document.getElementById('js-tool-reset')
+  // const $videoSelector = document.getElementById('videoEle')
 
   const audio = new Audio()
   audio.src = './assets/audio/capture.mp3'
